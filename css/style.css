@@ -295,19 +295,6 @@ header {
 
 
 /* Three Lines Hamburger Icon */
-.sidebar-toggle {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 22px;
-    height: 16px;
-    padding: 0;
-    z-index: 1020;
-}
-
 .sidebar-toggle span {
     display: block;
     width: 100%;
@@ -575,7 +562,7 @@ main.home-page {
     font-size: 1.8rem;
     color: #f8fafc;
     letter-spacing: 2px;
-    font-style:italic
+    font-style: italic;
     margin-bottom: 2rem;
     text-align: center;
 }

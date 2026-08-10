@@ -27,7 +27,6 @@
                 <a href="index.html">
                     <img src="images/hash-logo.png" alt="Hash 2026 Logo" class="logo-img">
                     <span class="logo-text">Hash 2026</span>
-                
                 </a>
             </div>
         </div>
@@ -245,33 +244,7 @@
         <p>© 2026 Hash Tech Fest. All rights reserved.</p>
     </footer>
 
-    <script>
-        const toggleBtn = document.getElementById('toggleBtn');
-        const menuOverlay = document.getElementById('menuOverlay');
-
-        function toggleSidebar() {
-            if (window.innerWidth > 768) {
-                document.body.classList.toggle('sidebar-collapsed');
-                document.body.classList.remove('sidebar-open');
-            } else {
-                document.body.classList.toggle('sidebar-open');
-                document.body.classList.remove('sidebar-collapsed');
-            }
-        }
-
-        function closeSidebar() {
-            document.body.classList.remove('sidebar-open');
-            document.body.classList.add('sidebar-collapsed');
-        }
-
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggleSidebar);
-        }
-
-        if (menuOverlay) {
-            menuOverlay.addEventListener('click', closeSidebar);
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 
 </html>
