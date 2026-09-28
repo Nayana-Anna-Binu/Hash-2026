@@ -54,11 +54,14 @@ const WelcomeBanner = (() => {
 // 2. FORM VALIDATION — regex-based, field-wise errors
 // =========================================================
 const FormValidator = (() => {
+    const getErrorElement = (input) =>
+        input.form.querySelector(`.field-error[data-field-error="${input.id}"]`);
+
     const showFieldError = (input, message) => {
         input.classList.add('field-invalid');
         input.classList.remove('field-valid');
-        const errEl = input.parentElement.querySelector('.field-error') || input.nextElementSibling;
-        if (errEl && errEl.classList.contains('field-error')) {
+        const errEl = getErrorElement(input);
+        if (errEl) {
             errEl.textContent = message;
             errEl.classList.add('show');
         }
@@ -67,10 +70,8 @@ const FormValidator = (() => {
     const showFieldValid = (input) => {
         input.classList.remove('field-invalid');
         input.classList.add('field-valid');
-        const errEl = input.parentElement.querySelector('.field-error') || input.nextElementSibling;
-        if (errEl && errEl.classList.contains('field-error')) {
-            errEl.classList.remove('show');
-        }
+        const errEl = getErrorElement(input);
+        if (errEl) errEl.classList.remove('show');
     };
 
     const validateField = (input, pattern, errorMsg) => {
@@ -89,52 +90,44 @@ const FormValidator = (() => {
 
     const init = () => {
         const regForm = document.getElementById('registerForm');
-        if (!regForm) return;
+        const loginForm = document.querySelector('.login-panel form');
+        const forms = [regForm, loginForm].filter(Boolean);
 
-        // Add error spans after each field
-        const fields = regForm.querySelectorAll('input[required], select[required]');
-        fields.forEach(field => {
-            if (field.type === 'radio' || field.type === 'checkbox' || field.type === 'file') return;
-            const errSpan = document.createElement('div');
-            errSpan.className = 'field-error';
-            field.insertAdjacentElement('afterend', errSpan);
+        forms.forEach(form => {
+            form.querySelectorAll('input[required], select[required]').forEach(field => {
+                if (field.type === 'radio' && field.id !== 'male') return;
+
+                const errSpan = document.createElement('div');
+                errSpan.className = 'field-error';
+                errSpan.dataset.fieldError = field.id;
+                errSpan.id = `${field.id}Error`;
+                errSpan.setAttribute('role', 'alert');
+                field.setAttribute('aria-describedby', errSpan.id);
+
+                const anchor = field.type === 'radio'
+                    ? field.closest('.radio-group')
+                    : field.closest('.field-control-row') || field;
+                anchor.insertAdjacentElement('afterend', errSpan);
+            });
         });
 
-        // Live validation on blur
         const nameInput = document.getElementById('username');
         const emailInput = document.getElementById('useremail');
         const mobileInput = document.getElementById('whatsapp');
         const loginEmail = document.getElementById('loginEmail');
         const loginPass = document.getElementById('loginPass');
 
-        if (nameInput) {
-            nameInput.addEventListener('blur', () => {
-                validateField(nameInput, PATTERNS.name, 'Enter a valid name (2–50 letters, spaces allowed).');
-            });
-        }
-        if (emailInput) {
-            emailInput.addEventListener('blur', () => {
-                validateField(emailInput, PATTERNS.email, 'Enter a valid email address.');
-            });
-        }
-        if (mobileInput) {
-            mobileInput.addEventListener('blur', () => {
-                validateField(mobileInput, PATTERNS.mobile, 'Enter a valid 10-digit Indian mobile number.');
-            });
-        }
-        if (loginEmail) {
-            loginEmail.addEventListener('blur', () => {
-                validateField(loginEmail, PATTERNS.email, 'Enter a valid email address.');
-            });
-        }
-        if (loginPass) {
-            loginPass.addEventListener('blur', () => {
-                validateField(loginPass, PATTERNS.password, 'Password needs 6+ chars with upper, lower & digit.');
-            });
-        }
+        [
+            [nameInput, PATTERNS.name, 'Enter a valid name (2–50 letters, spaces allowed).'],
+            [emailInput, PATTERNS.email, 'Enter a valid email address.'],
+            [mobileInput, PATTERNS.mobile, 'Enter a valid 10-digit Indian mobile number.'],
+            [loginEmail, PATTERNS.email, 'Enter a valid email address.'],
+            [loginPass, PATTERNS.password, 'Password needs 6+ chars with upper, lower & digit.']
+        ].forEach(([input, pattern, message]) => {
+            if (input) input.addEventListener('blur', () => validateField(input, pattern, message));
+        });
 
-        // Submit handler
-        regForm.addEventListener('submit', (e) => {
+        if (regForm) regForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
             let allValid = true;
@@ -179,6 +172,26 @@ const FormValidator = (() => {
                 }
             }
 
+            const genderInput = regForm.querySelector('input[name="gender"]');
+            if (genderInput) {
+                if (!regForm.querySelector('input[name="gender"]:checked')) {
+                    showFieldError(genderInput, 'Please select your gender.');
+                    allValid = false;
+                } else {
+                    showFieldValid(genderInput);
+                }
+            }
+
+            const idCardInput = document.getElementById('idcard');
+            if (idCardInput) {
+                if (!idCardInput.files.length) {
+                    showFieldError(idCardInput, 'Please upload your college ID.');
+                    allValid = false;
+                } else {
+                    showFieldValid(idCardInput);
+                }
+            }
+
             if (allValid) {
                 const events = [...regForm.querySelectorAll('input[name="events"]:checked')].map(cb => cb.value);
                 const participant = {
@@ -187,6 +200,7 @@ const FormValidator = (() => {
                     email: emailInput.value.trim(),
                     mobile: mobileInput.value.trim(),
                     college: collegeInput.value.trim(),
+                    gender: regForm.querySelector('input[name="gender"]:checked').value,
                     branch: branchSelect.value,
                     events: events.join(', ') || 'none'
                 };
@@ -204,20 +218,17 @@ const FormValidator = (() => {
             }
         });
 
-        // Login form validation
-        const loginForm = document.querySelector('.login-panel form');
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                let valid = true;
-                if (loginEmail && !validateField(loginEmail, PATTERNS.email, 'Enter a valid email address.')) valid = false;
-                if (loginPass && !validateField(loginPass, PATTERNS.password, 'Password needs 6+ chars with upper, lower & digit.')) valid = false;
-                if (valid) {
-                    alert('Login successful! (Demo only)');
-                    loginForm.reset();
-                }
-            });
-        }
+        if (loginForm) loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            let valid = true;
+            if (loginEmail && !validateField(loginEmail, PATTERNS.email, 'Enter a valid email address.')) valid = false;
+            if (loginPass && !validateField(loginPass, PATTERNS.password, 'Password needs 6+ chars with upper, lower & digit.')) valid = false;
+            if (valid) {
+                alert('Login successful! (Demo only)');
+                loginForm.reset();
+                loginForm.querySelectorAll('.field-valid').forEach(el => el.classList.remove('field-valid'));
+            }
+        });
     };
 
     return { init };
